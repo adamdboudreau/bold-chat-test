@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Boldchat</title>
+
+
+  <script>
+    var ssoToken= "";
+
+    /*Internal Rogers.com function to get the SSO token(sep,sch,sck)
+     */
+    function generateToken(callback){
+      $.ajax({
+        url: "/web/SSOChatEncodeServlet",
+        timeout : 50000,
+        dataType: 'json',
+        async:false,
+        type: "POST",
+        data:{
+          con:'',
+          sourceId:'',
+        },
+
+        success: function(data) {
+          var url = data.url;
+          var sep = getQueryVariable('sep',url);
+          var sch = getQueryVariable('sch',url);
+          var sck = getQueryVariable('sck',url);
+          getSSO_Token(callback,sep,sch,sck);
+          //ssoToken = '312321321323123';
+
+
+        },
+        error: function(xmlHttpRequest, textStatus, errorThrown) {
+          var error = "sso token error"
+          callback(error);
+        }
+      })
+
+      callback(ssoToken);
+
+    }
+    /*Internal Rogers.com function to get the query values.
+     */
+
+    function getQueryVariable(variable,url)
+    {
+
+      var vars = url.split("&");
+      for (var i=0;i<vars.length;i++) {
+        var pair = vars[i].split("=");
+        if(pair[0] == variable){return pair[1];}
+      }
+      return(false);
+    }
+
+    /*Safe send call passing SSO token (sep,sch & sck) to get the safe send token*/
+
+
+    function getSSO_Token(callback,sep,sch,sck){
+      var url = "https://safesend.rogers.com/submit-mr_test.php?jsoncallback=?"
+          + "&sep=" + sep
+          + "&sch=" + sch
+          + "&sck=" + sck;
+      var stk ='';
+      $.getJSON(url,
+          {
+            //tags: "jquery",
+            //tagmode: "any",
+            //format: "json"
+          },
+          function(data) {
+            ssoToken = data.stk;
+            callback(ssoToken);
+          });
+
+    }
+
+    /*Internal Rogers.com function to get the cookie values
+     */
+
+    function getCookie ( myCookieName )
+    {
+      var allcookies = unescape(document.cookie);
+      var cookieArray = allcookies.split(';');
+      var cookievalue = '';
+      var smCount=0;
+
+      //to findout of SMSESSION cookie Key count -to handle duplicate  values
+      if(myCookieName=="SMSESSION")
+      {
+        for (i=0; i<cookieArray.length; i++)
+        {
+          var cookie = cookieArray[i].split('=');
+          var name = cookie[0].replace(/\W/g, '');
+
+          if(name=="SMSESSION")
+          {
+            smCount++;
+          }
+        }
+      }
+      // parse through all cookies and find out if the one requested exists
+      for (i=0; i<cookieArray.length; i++)
+      {
+        var cookie = cookieArray[i].split('=');
+
+        var name = cookie[0].replace(/\W/g, '');
+        var value = cookie[1];
+
+        if(smCount>1)
+        {
+          if(name == myCookieName && value=="LOGGEDOFF")
+          {
+            cookievalue = value;
+            break;
+
+          }
+        }
+        else
+        {
+
+          if (name == myCookieName)
+          {
+            cookievalue = value;
+            break;
+          }
+        }
+      }
+
+      return cookievalue;
+    }
+
+    var pageTitle =document.title;
+    var aam_uuid = getCookie ('aam_uuid');
+    var custTrackingid = 'au:' + aam_uuid;
+    var language = getCookie('language');
+    var VisitorName = getCookie('userName');
+    var isLoggedin = checkLoggedin();
+    function checkLoggedin(){
+      var smsession = getCookie('SMSESSION');
+      if(!!smsession && smsession !== 'LOGGEDOFF')
+        return true;
+      else
+        return false;
+    }
+
+    /* Below code wrapped inside the function is provided by LMI.
+     On passing the button id (Staticbuttonid/floatingButtonID) and invoiking the function, a div is dynamically created with a anchor tag and appended to the page.
+     Anchor tag will have the live chat image configured for the particular button id.
+     On click of the above mentioned anchor tag, pre-chat window opens and the chat can be initiated.
+     Below function also has the visitor monitoring code which enables co-browse for the agents.
+     */
+
+
+    function boldChat(staticButtonID, language, pageTitle){
+      var bccbId = Math.random(); document.write(unescape('%3Cdiv id=' + bccbId + '%3E%3C/div%3E'));
+      window._bcvma = window._bcvma || [];
+      _bcvma.push(["setAccountID", "369303105785976989"]);
+      _bcvma.push(["setParameter", "WebsiteID", "236757985006933441"]);
+      _bcvma.push(["setParameter", "InvitationID", "366583799741781733"]);
+      _bcvma.push(["setParameter", "CustomUrl", ""]);
+      // _bcvma.push(["setParameter", "VisitName", VisitorName]);
+      // _bcvma.push(["setParameter", "VisitPhone", VisitorPhone]);
+      // _bcvma.push(["setParameter", "VisitEmail", VisitorEmail]);
+      _bcvma.push(["setParameter", "VisitInfo", ""]);
+      _bcvma.push(["setParameter", "CustomUrl", ""]);
+      _bcvma.push(["setParameter", "LanguageCode", language]);
+      //Set Delinquent status in VisitInfo
+      //Set language in VisitRef
+      _bcvma.push(["setParameter", "VisitRef", language]);
+      _bcvma.push(["setParameter", "WindowParameters", "customField_CxPageTitle=" + encodeURIComponent(pageTitle) + "&customField_custtrackingid=" + encodeURIComponent(custTrackingid)]);
+      // if(floatingButtonID) {
+      //   _bcvma.push(["addFloat", {type: "chat", id: floatingButtonID}]);
+      // }
+      if(staticButtonID) {
+        _bcvma.push(["addStatic", {type: "chat", bdid: staticButtonID, id: bccbId}]);
+      }
+      _bcvma.push(["pageViewed"]);
+
+      _bcvma.push(["setParameter", "SecureParameters", function (callback, type) {
+        var customFieldPassThrough = "customField_CxPageTitle&customField_custtrackingid";
+        var allVariablesToPassThrough = "Unsecured=" + encodeURIComponent("url&referrer&vn&vr&vi&ve&vp&curl&vicon&oicon&ln&vn&eq&cr&ci&ca&lc&cbdid&cwdid&rdid&roid&ccid&idid&" + customFieldPassThrough);
+        // if (type == 'visit' || !isLoggedin) {
+        callback(allVariablesToPassThrough);
+        // } else {
+        //   generateToken(function (ssoToken) {
+        //     callback(allVariablesToPassThrough + "&customField_ssoToken=" + encodeURIComponent(ssoToken));
+        //   });
+        // }
+      }]);
+
+      var bcLoad = function(){
+        if(window.bcLoaded) return; window.bcLoaded = true;
+        var vms = document.createElement("script"); vms.type = "text/javascript"; vms.async = true;
+        vms.src = ('https:'==document.location.protocol?'https://':'http://') + "vmss.boldchat.com/aid/369303105785976989/bc.vms4/vms.js";
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(vms, s);
+      };
+      if(window.pageViewer && pageViewer.load) pageViewer.load();
+      else if(document.readyState=="complete") bcLoad();
+      else if(window.addEventListener) window.addEventListener('load', bcLoad, false);
+      else window.attachEvent('onload', bcLoad);
+    }
+  </script>
+
+  <%= csrf_meta_tags %>
+</head>
+<body>
+
+<!-- BoldChat Visitor Monitor HTML v5.00 (Website=www.rogers.com - Sales Optimization,ChatButton=Dev_Testing,ChatInvitation=www.rogers.com Shopping Invite Ruleset) -->
+<script type="text/javascript">
+  window._bcvma = window._bcvma || [];
+  _bcvma.push(["setAccountID", "369303105785976989"]);
+  _bcvma.push(["setParameter", "WebsiteID", "236757985006933441"]);
+  _bcvma.push(["setParameter", "InvitationID", "366583799741781733"]);
+  _bcvma.push(["setParameter", "VisitName", ""]);
+  _bcvma.push(["setParameter", "VisitPhone", ""]);
+  _bcvma.push(["setParameter", "VisitEmail", ""]);
+  _bcvma.push(["setParameter", "VisitRef", ""]);
+  _bcvma.push(["setParameter", "VisitInfo", ""]);
+  _bcvma.push(["setParameter", "CustomUrl", ""]);
+  _bcvma.push(["setParameter", "WindowParameters", ""]);
+  _bcvma.push(["addFloat", {type: "chat", id: "5332487309809420106"}]);
+  _bcvma.push(["pageViewed"]);
+  var bcLoad = function(){
+    if(window.bcLoaded) return; window.bcLoaded = true;
+    var vms = document.createElement("script"); vms.type = "text/javascript"; vms.async = true;
+    vms.src = ('https:'==document.location.protocol?'https://':'http://') + "vmss.boldchat.com/aid/369303105785976989/bc.vms4/vms.js";
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(vms, s);
+  };
+  if(window.pageViewer && pageViewer.load) pageViewer.load();
+  else if(document.readyState=="complete") bcLoad();
+  else if(window.addEventListener) window.addEventListener('load', bcLoad, false);
+  else window.attachEvent('onload', bcLoad);
+</script>
+<noscript>
+  <a href="http://www.boldchat.com" title="Live Support" target="_blank"><img alt="Live Support" src="https://vms.boldchat.com/aid/369303105785976989/bc.vmi?wdid=236757985006933441&amp;vr=&amp;vn=&amp;vi=&amp;ve=&amp;vp=&amp;curl=" border="0" width="1" height="1" /></a>
+</noscript>
+<!-- /BoldChat Visitor Monitor HTML v5.00 -->
+
+<%= yield %>
+
+</body>
+</html>

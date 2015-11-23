@@ -1,0 +1,34 @@
+<h1>Listing signins</h1>
+
+<%= link_to 'users', users_path %>
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @signins.each do |signin| %>
+      <tr>
+        <td><%= link_to 'Show', signin %></td>
+        <td><%= link_to 'Edit', edit_signin_path(signin) %></td>
+        <td><%= link_to 'Destroy', signin, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+<div>
+  <script type="text/javascript">
+    boldChat('72671795779610022', '<%= I18n.locale %>', 'signin');
+  </script>
+</div>
+<br>
+<div>
+  <%= link_to 'New Signin', new_signin_path %>
+</div>
+
