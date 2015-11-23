@@ -7,6 +7,9 @@ class SigninsController < ApplicationController
   def register
   end
 
+  def int
+  end
+
   # GET /signins
   # GET /signins.json
   def index
