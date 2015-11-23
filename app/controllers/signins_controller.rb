@@ -1,6 +1,12 @@
 class SigninsController < ApplicationController
   before_action :set_signin, only: [:show, :edit, :update, :destroy]
 
+  def signin
+  end
+
+  def register
+  end
+
   # GET /signins
   # GET /signins.json
   def index
